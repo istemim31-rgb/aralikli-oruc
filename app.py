@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import os
 import time
+import random
 from datetime import datetime, timedelta, timezone
 
 # Türkiye Saat Dilimi (UTC+3)
@@ -41,6 +42,7 @@ def veri_sil():
 # --- Beyin (Biyolojik Hesaplamalar) ---
 def vucut_durumu_getir(gecen_saat):
     if gecen_saat < 4:
+        st.success(...)
         return "🍽️ **Sindirim Aşaması:** Kan şekeri yükseliyor ve insülin salgılanıyor."
     elif gecen_saat < 12:
         return "📉 **Kan Şekeri Dengeleniyor:** Vücut glikojen depolarını kullanmaya başladı."
@@ -50,7 +52,12 @@ def vucut_durumu_getir(gecen_saat):
         return "🧬 **Derin Yağ Yakımı & Otofaji:** Hücresel yenilenme ve temizlik hızlandı."
     else:
         return "⚡ **Maksimum Otofaji & HGH:** Büyüme hormonu zirvede, derin yenilenme aktif."
-
+    MOTIVASYON_SOZLERI = [
+    "🔥 Şu an vücudun kendi kendini onarıyor, harika gidiyorsun!",
+    "💧 Bir bardak su iç, açlık hissinin çoğu aslında susuzluktur.",
+    "⚡ Disiplin, o an istediğin şey ile en çok istediğin şey arasındaki seçimdir.",
+    "🧬 Her geçen saat hücrelerin yenileniyor, hedefe çok az kaldı!"
+]
 # --- Vitrin (Arayüz) ---
 st.title("⏳ Aralıklı Oruç Takip")
 
