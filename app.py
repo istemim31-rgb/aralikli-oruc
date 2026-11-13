@@ -7,10 +7,8 @@ from datetime import datetime, timedelta, timezone
 # Türkiye Saat Dilimi (UTC+3)
 TR_SAATI = timezone(timedelta(hours=3))
 
-
 def simdi_tr():
     return datetime.now(TR_SAATI).replace(tzinfo=None)
-
 
 st.set_page_config(
     page_title="Aralıklı Oruç",
@@ -20,28 +18,27 @@ st.set_page_config(
 
 VERI_DOSYASI = "oruc_verisi.json"
 
-
+# --- Hafıza (Veri İşlemleri) ---
 def veri_yukle():
     if os.path.exists(VERI_DOSYASI):
         with open(VERI_DOSYASI, "r", encoding="utf-8") as f:
             return json.load(f)
     return None
 
-
-def veri_kaydet(baslangic_zamani, hedef_saat):
+def veri_kaydet(baslangic_zamani, hedef_saat, su_sayisi=0):
     veri = {
         "baslangic": baslangic_zamani.isoformat(),
-        "hedef_saat": hedef_saat
+        "hedef_saat": hedef_saat,
+        "su_sayisi": su_sayisi
     }
     with open(VERI_DOSYASI, "w", encoding="utf-8") as f:
         json.dump(veri, f)
-
 
 def veri_sil():
     if os.path.exists(VERI_DOSYASI):
         os.remove(VERI_DOSYASI)
 
-
+# --- Beyin (Biyolojik Hesaplamalar) ---
 def vucut_durumu_getir(gecen_saat):
     if gecen_saat < 4:
         return "🍽️ **Sindirim Aşaması:** Kan şekeri yükseliyor ve insülin salgılanıyor."
@@ -54,7 +51,7 @@ def vucut_durumu_getir(gecen_saat):
     else:
         return "⚡ **Maksimum Otofaji & HGH:** Büyüme hormonu zirvede, derin yenilenme aktif."
 
-
+# --- Vitrin (Arayüz) ---
 st.title("⏳ Aralıklı Oruç Takip")
 
 veri = veri_yukle()
@@ -62,6 +59,7 @@ veri = veri_yukle()
 if veri:
     baslangic = datetime.fromisoformat(veri["baslangic"])
     hedef_saat = veri["hedef_saat"]
+    su = veri.get("su_sayisi", 0)
     bitis = baslangic + timedelta(hours=hedef_saat)
     su_an = simdi_tr()
 
@@ -73,6 +71,7 @@ if veri:
     dakika = (gecen_saniye % 3600) // 60
     saniye = gecen_saniye % 60
 
+    # Dijital Sayaç Kartı
     st.markdown(f"""
         <div style="background-color:#1E1E2E; padding:25px; border-radius:15px; text-align:center; margin-bottom:15px;">
             <p style="color:#A6ADC8; margin:0; font-size:14px;">GEÇEN SÜRE ({hedef_saat} SAATLİK PLAN)</p>
@@ -83,6 +82,7 @@ if veri:
 
     st.progress(yuzde)
 
+    # Kalan Süre ve Yüzde Metrikleri
     kalan_saniye = int((bitis - su_an).total_seconds())
     col1, col2 = st.columns(2)
     with col1:
@@ -96,8 +96,24 @@ if veri:
             st.metric("Durum", "Hedef Tamamlandı! 🎉")
 
     st.info(vucut_durumu_getir(gecen_saat))
+    
     st.divider()
 
+    # Su Takibi Bölümü
+    st.subheader(f"💧 İçilen Su: {su} Bardak ({su * 0.25:.2f} L)")
+    su_col1, su_col2 = st.columns(2)
+    with su_col1:
+        if st.button("💧 +1 Bardak Su", use_container_width=True):
+            veri_kaydet(baslangic, hedef_saat, su + 1)
+            st.rerun()
+    with su_col2:
+        if st.button("↩️ 1 Bardak Geri Al", use_container_width=True) and su > 0:
+            veri_kaydet(baslangic, hedef_saat, su - 1)
+            st.rerun()
+
+    st.divider()
+
+    # Orucu Bitir Butonu
     if st.button("⏹ Orucu Bitir / Sıfırla", type="primary", use_container_width=True):
         veri_sil()
         st.rerun()
@@ -115,9 +131,9 @@ else:
     )
 
     st.subheader("Ne zaman başladın?")
-
+    
     if st.button("▶ Orucu Şimdi Başlat", type="primary", use_container_width=True):
-        veri_kaydet(simdi_tr(), hedef)
+        veri_kaydet(simdi_tr(), hedef, 0)
         st.rerun()
 
     st.markdown("<p style='text-align:center; color:gray;'>— veya —</p>", unsafe_allow_html=True)
@@ -128,5 +144,5 @@ else:
         baslangic = simdi.replace(hour=secilen_saat.hour, minute=secilen_saat.minute, second=0, microsecond=0)
         if baslangic > simdi:
             baslangic -= timedelta(days=1)
-        veri_kaydet(baslangic, hedef)
+        veri_kaydet(baslangic, hedef, 0)
         st.rerun()
